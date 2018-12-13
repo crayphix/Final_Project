@@ -154,7 +154,7 @@ public class LibraryControl extends Application {
 
 
         // Create a scene and place the pane in the stage
-        Scene scene = new Scene(pane, 825, 450);
+        Scene scene = new Scene(pane, 955, 450);
         primaryStage.setTitle("Library Software"); // Set the stage title
         primaryStage.setScene(scene); // Place the scene in the stage
         primaryStage.show(); // Display the stage

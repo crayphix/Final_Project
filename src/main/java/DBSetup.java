@@ -95,7 +95,7 @@ public class DBSetup extends Application {
         pane.getChildren().add(gPane);
 
         // Create a scene and place the pane in the stage
-        Scene scene = new Scene(pane, 500, 250);
+        Scene scene = new Scene(pane, 600, 250);
         primaryStage.setTitle("Database SetUp"); // Set the stage title
         primaryStage.setScene(scene); // Place the scene in the stage
         //primaryStage.setMinHeight();

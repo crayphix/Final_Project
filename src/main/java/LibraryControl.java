@@ -9,6 +9,7 @@
    I have not given my code to any student.
    Print your Name here: Bryan Speelman
 */
+
 import javafx.application.Application;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
@@ -70,6 +71,7 @@ public class LibraryControl extends Application {
         //Set title
         title.setText("Library Controls");
         title.setStyle("-fx-font-size: 20");
+
         titleHBox.getChildren().addAll(title, btConnect);
         titleHBox.setPadding(new Insets(5,5,5,5));
         titleHBox.setSpacing(550);
@@ -77,20 +79,25 @@ public class LibraryControl extends Application {
         //build book menu pane
         bookPane.add(new Text("ISBN: "), 0, 0);
         bookPane.add(isbn, 1, 0);
+
         bookPane.add(new Text("Title: "),0,2);
         bookPane.add(bookTitle, 1, 2);
         bookTitle.setEditable(false);
+
         bookPane.add(new Text("Author: "),0, 3);
         bookPane.add(author, 1,3);
         author.setEditable(false);
+
         bookPane.add(new Text("Book IDs in: "), 0, 4);
         bookPane.add(bookIdIn, 1, 4);
         bookIdIn.setEditable(false);
         bookIdIn.setMinHeight(70);
+
         bookPane.add(new Text("Book IDs out"), 0, 5);
         bookPane.add(bookIdOut, 1, 5);
         bookIdOut.setEditable(false);
         bookIdOut.setMinHeight(70);
+
         bookPane.add(btSearchISBN,0,6);
         bookPane.setStyle("-fx-border-color: BLACK; -fx-spacing: 10");
         bookPane.setVgap(5);
@@ -98,13 +105,16 @@ public class LibraryControl extends Application {
         //build user menu
         userPane.add(new Text("User ID: "), 0, 0);
         userPane.add(usrId, 1,0);
+
         userPane.add(new Text("Name: "), 0, 1);
         userPane.add(name, 1, 1);
         name.setEditable(false);
+
         userPane.add(new Text("Address: "), 0, 2);
         userPane.add(address,1,2);
         address.setEditable(false);
         address.setMinHeight(70);
+
         userPane.add(btSearchUsr,0,3);
         userPane.setStyle("-fx-border-color: BLACK; -fx-spacing: 10");
         userPane.setVgap(5);
@@ -112,16 +122,22 @@ public class LibraryControl extends Application {
         //build checkout menu
         checkPane.add(new Text("User ID: "),0,0);
         checkPane.add(usrIdCk, 1,0);
+
         checkPane.add(new Text("Book ID: "),0,1);
         checkPane.add(bookIdCk, 1,1);
+
         checkPane.add(new Text("Check Out Book"),0 ,2);
         checkPane.add(btCheckout,1,2);
+
         checkPane.add(new Text("Return Book"), 0, 3);
         checkPane.add(btReturn, 1, 3);
+
         checkPane.add(new Text("Check Rentals By User ID"), 0, 4);
         checkPane.add(btRntlCkUsr, 1, 4);
+
         checkPane.add(new Text("Check Rental by Book ID"), 0, 5);
         checkPane.add(btRnlCkBk, 1, 5);
+
         checkPane.setStyle("-fx-border-color: BLACK; -fx-spacing: 10");
         checkPane.setVgap(5);
 
@@ -129,8 +145,10 @@ public class LibraryControl extends Application {
         status.setMinSize(700, 150);
         status.setEditable(false);
         status.setScrollTop(0);
+
         menuHBox.setSpacing(10);
         menuHBox.getChildren().addAll(bookPane, userPane, checkPane);
+
         vBox.getChildren().addAll(titleHBox, menuHBox, status);
         pane.getChildren().addAll(vBox);
 

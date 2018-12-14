@@ -10,7 +10,10 @@
    Print your Name here: Bryan Speelman
 */
 
+import com.sun.rowset.JdbcRowSetImpl;
 import javafx.application.Application;
+import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
@@ -20,7 +23,15 @@ import javafx.scene.layout.*;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
 
+import javax.sql.RowSet;
+import java.awt.print.Book;
+import java.sql.*;
+
 public class LibraryControl extends Application {
+    //SQL Variables
+    private Statement statement;
+    private static Connection connection;
+
     //Text
     private Text title = new Text("Library Controls"); // Title
 
@@ -34,7 +45,7 @@ public class LibraryControl extends Application {
     private Button btRnlCkBk = new Button("Check Status(Book ID only)");
 
     //TextBoxes
-    private TextField isbn = new TextField(); //ISBN
+    private TextField tfISBN = new TextField(); //ISBN
     private TextField author = new TextField(); //Author
     private TextField bookIdIn = new TextField(); //BookID In
     private TextField bookIdOut = new TextField(); // Book ID Out
@@ -58,10 +69,14 @@ public class LibraryControl extends Application {
     private GridPane checkPane = new GridPane(); //Grid pane to hold checkout status
 
     //TextArea
-    private TextArea status = new TextArea(); //Text Area to hold status of querys
+    private TextArea taStatus =
+            new TextArea("Welcome to the Library Database Control System"); //Text Area to hold status
+
+    //Rowsets
+    private static RowSet rowSet = new JdbcRowSetImpl();
 
     @Override
-    public void start(Stage primaryStage) throws Exception {
+    public void start(Stage primaryStage) {
         //Main Pane
         Pane pane = new Pane();
 
@@ -78,7 +93,7 @@ public class LibraryControl extends Application {
 
         //build book menu pane
         bookPane.add(new Text("ISBN: "), 0, 0);
-        bookPane.add(isbn, 1, 0);
+        bookPane.add(tfISBN, 1, 0);
 
         bookPane.add(new Text("Title: "),0,2);
         bookPane.add(bookTitle, 1, 2);
@@ -142,21 +157,170 @@ public class LibraryControl extends Application {
         checkPane.setVgap(5);
 
         //Build main pane
-        status.setMinSize(700, 150);
-        status.setEditable(false);
-        status.setScrollTop(0);
+        taStatus.setMinSize(700, 150);
+        taStatus.setScrollTop(0);
 
         menuHBox.setSpacing(10);
         menuHBox.getChildren().addAll(bookPane, userPane, checkPane);
 
-        vBox.getChildren().addAll(titleHBox, menuHBox, status);
+        vBox.getChildren().addAll(titleHBox, menuHBox, taStatus);
         pane.getChildren().addAll(vBox);
-
 
         // Create a scene and place the pane in the stage
         Scene scene = new Scene(pane, 955, 450);
         primaryStage.setTitle("Library Software"); // Set the stage title
         primaryStage.setScene(scene); // Place the scene in the stage
         primaryStage.show(); // Display the stage
+
+        //button that activates pop up window to get connection
+        btConnect.setOnAction(e->{
+            if(rowSet.getUsername() == null) {
+                try {
+                    rowSet = DBSetup.display();
+                } catch (Exception ex) {
+                    taStatus.appendText("Error connecting to database!");
+                }
+            }
+            else
+                taStatus.appendText("\nConnected to Database");
+            });
+
+        //button that searches for bookinfo from isbn number
+        btSearchISBN.setOnAction(e-> {
+            try {
+                //Clear TextFields
+                author.clear();
+                bookTitle.clear();
+                bookIdIn.clear();
+                bookIdOut.clear();
+
+                //Run SQL commands
+                processISBNSearch("Select * from books where isbn = '" +
+                        tfISBN.getText().trim() + "'");
+            } catch (Exception e1) {
+                taStatus.appendText("\nCheck connection");
+            }
+        });
+
+        //button that searches users from user ID
+        btSearchUsr.setOnAction(e->{
+            try{
+                //Clear TextFields
+                name.clear();
+                address.clear();
+
+                //Run Sql commands
+                processUserSearch("select * from users where userId = '"
+                        + usrId.getText().trim() + "'" );
+            }
+            catch (Exception ex){
+                ex.printStackTrace();
+                taStatus.appendText("\nCheck Connection");
+            }
+        });
+
+        //button that process checkout
+        btCheckout.setOnAction(e->{
+            checkoutBook();
+        });
+
+
+    }
+
+    private void checkoutBook() {
+        try {
+            //Check userId
+            rowSet.setCommand("Select * from users " +
+                    "where userId ='" + usrIdCk.getText().trim() + "'");
+            rowSet.execute();
+            if(!rowSet.next()){
+                taStatus.appendText("\nUser does not exist");
+                return;
+            }
+
+            //Check bookId
+            rowSet.setCommand("Select * from books " +
+                    "where bookId ='" + bookIdCk.getText().trim() + "' " +
+                    "and checkout = 0");
+            rowSet.execute();
+            if(!rowSet.next()){
+                taStatus.appendText("\nBook does not exist or is unavailable");
+                return;
+            }
+
+            //update database
+            rowSet.setCommand("update books " +
+                    "set checkout = 1, userId = '" + usrIdCk.getText().trim() + "' "+
+                    "where bookId = '" + bookIdCk.getText().trim() + "'");
+            taStatus.appendText("\nBook # " + bookIdCk.getText().trim() +
+                    " checked out to user # " + usrIdCk.getText().trim());
+        }
+        catch (SQLException ex){
+            ex.printStackTrace();
+            taStatus.appendText("\nCheck Connection");
+        }
+    }
+
+    private void processUserSearch(String sqlCommand) {
+        PatronBean userBean = new PatronBean();
+        try{
+            //execute search
+            rowSet.setCommand(sqlCommand);
+            rowSet.execute();
+
+            //map info to userBean
+            while(rowSet.next()) {
+                userBean.setUsrId((String) rowSet.getObject(1));
+                userBean.setName((String) rowSet.getObject(2));
+                userBean.setAddress((String) rowSet.getObject(3));
+            }
+            //output to pane
+            name.setText(userBean.getName());
+            address.setText(userBean.getAddress());
+
+            //Check correct input
+            if(userBean.getName() == null)
+                taStatus.appendText("\nUser does not exist!");
+        }
+        catch (SQLException ex){
+            ex.printStackTrace();
+            taStatus.appendText("\nCheck Connection");
+        }
+    }
+
+    /** Execute SQL SELECT commands */
+    private void processISBNSearch(String sqlCommand) {
+        BookBean bookBean = new BookBean();
+        try {
+                rowSet.setCommand(sqlCommand);
+                rowSet.execute();
+                while(rowSet.next()){
+                    //Map information
+                    bookBean.setBookId((String)rowSet.getObject(1));
+                    bookBean.setIsbn(String.valueOf(rowSet.getObject(2)));
+                    bookBean.setTitle(String.valueOf(rowSet.getObject(3)));
+                    bookBean.setAuthor(String.valueOf(rowSet.getObject(4)));
+                    bookBean.setCheckout((Boolean)rowSet.getObject(5));
+
+                    //Send Checkout info to in or out pane
+                    if(bookBean.getCheckout() != true){
+                        bookIdIn.appendText(bookBean.getBookId() + ", ");
+                    }
+                    else{
+                        bookIdOut.appendText(bookBean.getBookId() + ", ");
+                    }
+                }
+                //Set textfield info
+                author.setText(bookBean.getAuthor());
+                bookTitle.setText(bookBean.getTitle());
+
+                //Check if isbn exists
+                if(bookBean.getAuthor() == null)
+                    taStatus.appendText("\nISBN does not exist");
+            }
+            catch (SQLException e) {
+               taStatus.appendText("Check connection\n");
+            }
+
     }
 }

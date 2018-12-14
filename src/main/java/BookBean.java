@@ -13,7 +13,7 @@
 public class BookBean {
 
     //Variables
-    private int bookId;
+    private String bookId;
     private String isbn;
     private String title;
     private String author;
@@ -30,7 +30,7 @@ public class BookBean {
     }
 
     //Getters
-    public int getBookId(){
+    public String getBookId(){
         return bookId;
     }
 
@@ -51,7 +51,7 @@ public class BookBean {
     }
 
     //Setters
-    public void setBookId(int bookId){
+    public void setBookId(String bookId){
         this.bookId = bookId;
     }
 

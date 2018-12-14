@@ -10,173 +10,240 @@
    Print your Name here: Bryan Speelman
 */
 
+import com.sun.rowset.JdbcRowSetImpl;
 import javafx.application.Application;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
-import javafx.scene.control.Button;
-import javafx.scene.control.ComboBox;
-import javafx.scene.control.Label;
-import javafx.scene.control.TextField;
+import javafx.scene.control.*;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
-import javafx.scene.text.Text;
 import javafx.stage.Stage;
-import java.sql.DriverManager;
-import java.sql.Connection;
-import java.sql.SQLException;
-import java.util.concurrent.atomic.AtomicReference;
 
-public class DBSetup extends Application {
-    private Connection connection;
+import javax.sql.RowSet;
+import java.io.*;
+import java.sql.*;
+import java.util.Scanner;
 
-    @Override
-    public void start(Stage primaryStage) throws Exception {
-        //Main pane
-        Pane pane = new Pane();
+public class DBSetup {
+    //SQL Variables
+    private static Statement statement;
+    private static Connection connection;
+
+    //Labels
+    private static Label status = new Label("No Connection");
+
+    //GridPanes
+    private static GridPane gPane = new GridPane();
+
+    //Panes
+    private static Pane setupPane = new Pane();
+
+    //ComboBoxes
+    private static ComboBox cboDriver = new ComboBox();
+    private static ComboBox cboURL = new ComboBox();
+
+    //TextFields
+    private static TextField tfUsername = new TextField();
+    private static PasswordField pfPassword = new PasswordField();
+
+    //Hboxes
+    private static HBox hBox = new HBox();
+
+    //Buttons
+    //Button to connect to database
+    private static Button btConnect = new Button("Connect");
+
+    //Button to create tables and sample database
+    private static Button btTable = new Button("Create Tables");
+
+    //Button to close and open Library control
+    private static Button btClose = new Button("Close");
+
+    //Strings
+    private static String sqlCommand;
+    private static String url;
+    private static String username;
+    private static String password;
+
+    //Scenes
+    private static Scene setupScene = new Scene(setupPane, 600, 250);
+    private static String driver = null;
+
+    //Rowset
+    private static RowSet rowSet = new JdbcRowSetImpl();
+
+    public static RowSet display(){
+        //Stage to display
+        Stage dbPopUp = new Stage();
+
         //GridPane
-        GridPane gPane = new GridPane();
         gPane.setHgap(10);
         gPane.setVgap(10);
         gPane.setPadding(new Insets(5,5,5,5));
 
-            //Text showing status
-            Text status = new Text("Not Connected");
-            gPane.add(status, 0, 0);
+        //Text showing status
+        gPane.add(status, 0, 0);
 
-            //Label and Combobox for JDBC Driver Selection
-            ComboBox drvSelect = new ComboBox();
-            drvSelect.setMinWidth(150);
-            drvSelect.getItems().addAll(
-                    "com.mysql.jdbc.Driver",
-                    "mysql-connector-java-ver-8.0.13"
-            );
-            gPane.add(new Label("JDBC Driver:"), 0, 1);
-            gPane.add(drvSelect, 1,1);
+        //Label and Combobox for JDBC Driver Selection
+        cboDriver.setMinWidth(150);
+        cboDriver.getItems().addAll(
+                "com.mysql.jdbc.Driver",
+                "sun.jdbc.odbc.dbc0dbcDriver",
+                "oracle.jdbc.driver.OracleDriver"
+        );
+        cboDriver.getSelectionModel().selectFirst();
 
-            //Label and Combobox with Editing enables to choose Database URL
-            ComboBox dbUrl = new ComboBox();
-            dbUrl.setMinWidth(150);
-            dbUrl.setEditable(true); //Editable
-            dbUrl.setPromptText("jdbc:mysql://localhost:3306/bookslibrary");
-            dbUrl.getItems().addAll("jdbc:mysql://localhost:3306/bookslibrary");
+        gPane.add(new Label("JDBC Driver:"), 0, 1);
+        gPane.add(cboDriver, 1,1);
 
-            gPane.add(new Label("Database URL"), 0, 2);
-            gPane.add(dbUrl, 1,2);
+        //Label and Combobox with Editing enables to choose Database URL
+        cboURL.setMinWidth(150);
+        cboURL.setEditable(true); //Editable
+        cboURL.setPromptText("jdbc:mysql://localhost:3306/bookslibrary");
+        cboURL.getItems().addAll("jdbc:mysql://localhost:3306/bookslibrary");
 
-            //Label and Textbox for Username
-            TextField usrNme = new TextField();
-            gPane.add(new Label("UserName:"), 0, 3);
-            gPane.add(usrNme, 1,3);
+        gPane.add(new Label("Database URL"), 0, 2);
+        gPane.add(cboURL, 1,2);
 
-            //Label and TextBox for password
-            TextField pass = new TextField();
-            gPane.add(new Label("Password"), 0, 4);
-            gPane.add(pass, 1,4);
+        //Label and Textbox for Username
+        gPane.add(new Label("UserName:"), 0, 3);
+        gPane.add(tfUsername, 1,3);
 
-            //HBox for buttons
-            HBox hBox = new HBox();
+        //Label and TextBox for password
+        gPane.add(new Label("Password"), 0, 4);
+        gPane.add(pfPassword, 1,4);
 
-            //Button to connect to database
-            Button btConnect = new Button("Connect");
+        //Add buttons to hbox then add hbox to gpane
+        hBox.getChildren().addAll(btConnect, btTable, btClose);
+        hBox.setSpacing(10);
+        gPane.add(hBox, 0, 5);
 
-            //Button to create tables and sample database
-            Button btTable = new Button("Create Tables");
-
-            //Button to close and open Library control
-            Button btClose = new Button("Close");
-
-            //Add buttons to hbox then add hbox to gpane
-            hBox.getChildren().addAll(btConnect, btTable, btClose);
-            hBox.setSpacing(10);
-            gPane.add(hBox, 0, 5);
-
-        //Add Vbod to pane
-        pane.getChildren().add(gPane);
+        //Add gPane to pane
+        setupPane.getChildren().add(gPane);
 
         // Create a scene and place the pane in the stage
-        Scene scene = new Scene(pane, 600, 250);
-        primaryStage.setTitle("Database SetUp"); // Set the stage title
-        primaryStage.setScene(scene); // Place the scene in the stage
-        //primaryStage.setMinHeight();
-        //primaryStage.setMinWidth(); // Set min width of window
-        primaryStage.show(); // Display the stage
+        dbPopUp.setScene(setupScene);
+        dbPopUp.show();
 
-        AtomicReference<Connection> connection = null; //Connection object
 
         //On-Action for Connect
         btConnect.setOnAction(e -> {
             //Connect to database using information from fields
             try {
-               getConnection((String) drvSelect.getValue(),
-                       (String) dbUrl.getValue(), usrNme.getText().trim(), pass.getText().trim(), status);
+                connectToDB();
+                rowSet.setUrl(url);
+                rowSet.setUsername(username);
+                rowSet.setPassword(password);
             } catch (Exception ex){}
         });
 
         //On-Action for create Table
-       /* btTable.setOnAction(e -> {
+        btTable.setOnAction(e -> {
             //Connect to database using information from fields
             try {
-                status.setText(getTables((Connection) connection));
-            } catch (Exception ex){}
+                executeSQLScript("DBScript.sql");
+            } catch (Exception ex){
+                ex.printStackTrace();
+            }
         });
-*/
+
         //On-Action for Closie
         btClose.setOnAction(e->{
             try{
-                primaryStage.close();
+
+                dbPopUp.close();
             }
             catch (Exception ex){}
         });
+
+    return rowSet;
+    }
+
+    /** Connect to DB */
+    private static void connectToDB() {
+        // Get database information from the user input
+        driver = (String) cboDriver
+                .getSelectionModel().getSelectedItem();
+        url = (String) cboURL.getSelectionModel().getSelectedItem() + "?autoReconnect=true&useSSL=false";
+        username = tfUsername.getText().trim();
+        password = pfPassword.getText().trim();
+
+        // Connection to the database
+        try {
+            Class.forName(driver);
+            connection = DriverManager.getConnection(
+                    url, username, password);
+            status.setText("Connected to database");
+        }
+        catch (java.lang.Exception ex) {
+            status.setText("Connection Error!!");
+            ex.printStackTrace();
+        }
+    }
+
+    /** Execute SQL commands */
+    private static void executeSQLScript(String filename) {
+        //Check database connection
+        if (connection == null) {
+            status.setText("Please connect to a database first");
+            return;
+        }
+        else {
+            //Load file and parse to string array delineated by ;
+            sqlCommand = getSqlCommand(filename);
+            String[] commands = sqlCommand.replace('\n', ' ').split(";");
+
+            for (String aCommand: commands) {
+                //Check for SELECT statements
+                if (aCommand.trim().toUpperCase().startsWith("SELECT")) {
+                    status.setText("ERROR sql file has SELECT statements!!");
+                    return;
+                }
+                else {
+                    processSQLNonSelect(aCommand);
+                }
+            }
+        }
+    }
+
+    /** Execute SQL DDL, and modification commands */
+    private static void processSQLNonSelect(String sqlCommand) {
+        try {
+            // Get a new statement for the current connection
+            statement = connection.createStatement();
+
+            // Execute a non-SELECT SQL command
+            statement.executeUpdate(sqlCommand);
+
+            status.setText("SQL command executed");
+        }
+        catch (SQLException ex) {
+            ex.printStackTrace();
+            status.setText("Errror: Check SQL script");
+        }
     }
 
     /**
-     * The main method is only needed for the IDE with limited
-     * JavaFX support. Not needed for running from the command line.
-     */
-    public static void main(String[] args) {
-        launch(args);
-    }
-
-    /**
-     *Method for getting connection given drivername url, usrname, pass, and status object
-     * @param driver
-     * @param url
-     * @param user
-     * @param pass
-     * @param text
+     * Parse file contents to String
+     * @param filename
      * @return
      */
-    public void getConnection(String driver, String url,
-                              String user, String pass, Text text){
-        //Try registering jdbc.Driver
-        try{
-            Class.forName(driver);
-        }
-        catch(ClassNotFoundException e){
-            e.printStackTrace();
-            text.setText("Error finding JDBC driver");
-        }
-        //Create connection
-        try{
-            connection = DriverManager.getConnection(url, user, pass);
-        }
-        catch(SQLException e){
-            e.printStackTrace();
-            text.setText("Connection error please check url, Username and password");
-        }
-        text.setText("You Are Connected!");
-    }
+    private static String getSqlCommand(String filename){
+        //String object to append and return
+        StringBuilder sqlCommand = new StringBuilder();
 
-    //Method to run SQL script to create table w/ Test Data
-    public String getTables(){
-        //Try loading and running script
-        try{
-
+        //Scann in file contents to StringBuilder object
+        try {
+            Scanner fIn = new Scanner(new File(filename)).useDelimiter(";");
+            while(fIn.hasNext()){
+                sqlCommand.append(fIn.nextLine());
+            }
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
         }
-        catch (Exception ex){
-            return "Failed to load .SQL Script!";
-        }
-        return "Tables Created!!";
+        //Parse stringbuilder object to string and return
+        return sqlCommand.toString();
     }
 }
+

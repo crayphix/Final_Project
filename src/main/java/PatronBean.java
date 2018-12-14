@@ -13,9 +13,10 @@
 public class PatronBean {
 
     //Variables
-    private int usrId;
+    private String usrId;
     private String name;
     private String address;
+    private String[] books;
 
     PatronBean(){};
 
@@ -25,7 +26,7 @@ public class PatronBean {
     }
 
     //getters
-    public int getUsrId(){
+    public String getUsrId(){
         return usrId;
     }
 
@@ -37,8 +38,10 @@ public class PatronBean {
         return address;
     }
 
+    public String[] getBooks(){return books;}
+
     //Setters
-    public void setUsrId(int usrId){
+    public void setUsrId(String usrId){
         this.usrId = usrId;
     }
 
@@ -49,6 +52,8 @@ public class PatronBean {
     public void setAddress(String address) {
         this.address = address;
     }
+
+    public void setBooks(String[] books){this.books = books;}
 
     //ToString
     @Override
